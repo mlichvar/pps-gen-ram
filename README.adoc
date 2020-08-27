@@ -1,0 +1,33 @@
+pps-gen-ram
+===========
+
+This program generates a pulse-per-second (PPS) signal on the memory bus of a
+computer (e.g. DDR3, DDR4). It makes random reads to an allocated buffer to
+trigger an activity on the bus and their timing forms the PPS signal. This
+signal can be compared to a reference signal to measure the accuracy of the
+system clock, with less uncertainty than reading a hardware clock over the PCIe
+bus, which typically has a latency of at least few hundred nanoseconds.
+
+The maximum average error in the PPS signal (i.e. delay in the CPU and memory
+controller) can be determined from the reported read latency and a theoretical
+minimum latency which depends on the configured memory speed and timings (tRCD
++ tCL).
+
+With DDR4, a good memory signal to probe is the ACT signal (pin 62 on the
+288-pin DIMM socket). With DDR3 and older it is the RAS signal (pin 192 on the
+240-pin DDR3 DIMM socket). The shape of the signal at the time of the read
+access may depend on the controller and configuration, e.g. even if the signal
+is active low, it can be low when idle as the chip doesn't have to be selected
+and the signal first goes high before it actually activates.
+
+The pulse interval (in nanoseconds) is the single argument of the program.
+
+With a shorter interval the PPS signal will be more visible among other memory
+activity, but it needs to be long enough to prevent an ambiguity in the
+absolute value of the measured error (half of the interval).
+
+For best results, other memory activity should be minimized, e.g. unnecessary
+processes stopped, integrated GPU disabled, etc. Isolating the generator from
+other processes on a CPU core (with its own L2 cache) may help. The program
+allocates a 128MB buffer. If the CPU has a comparable cache, the BUFFER_LENGTH
+constant in the source code may need to be adjusted accordingly.
